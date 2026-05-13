@@ -1,32 +1,53 @@
 const dns = require("node:dns");
 
-// Set custom DNS servers to avoid MongoDB DNS issues
+// ==========================================
+// FIX MONGODB DNS ISSUE
+// ==========================================
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
+// ==========================================
+// IMPORT PACKAGES
+// ==========================================
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
-// MongoDB imports
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+// MongoDB Imports
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+} = require("mongodb");
 
-// Load environment variables
+// ==========================================
+// LOAD ENV VARIABLES
+// ==========================================
 dotenv.config();
 
-// MongoDB connection URI from .env
-const uri = process.env.MONGODB_URI;
-
-// Create Express app
+// ==========================================
+// EXPRESS APP
+// ==========================================
 const app = express();
 
-// Server port
-const PORT = process.env.PORT;
+// ==========================================
+// PORT
+// ==========================================
+const PORT = process.env.PORT || 5000;
 
-// Middlewares
+// ==========================================
+// MIDDLEWARES
+// ==========================================
 app.use(cors());
 app.use(express.json());
 
-// Create MongoDB Client
+// ==========================================
+// MONGODB URI
+// ==========================================
+const uri = process.env.MONGODB_URI;
+
+// ==========================================
+// CREATE MONGODB CLIENT
+// ==========================================
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -35,126 +56,301 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Main async function
+// ==========================================
+// MAIN FUNCTION
+// ==========================================
 async function run() {
+
   try {
 
-    // Connect MongoDB
+    // ==========================================
+    // CONNECT TO MONGODB
+    // ==========================================
     await client.connect();
 
-    // Database & Collection
-    const db = client.db("wanderlust");
-    const destinationCollection = db.collection("destinations");
+    console.log("✅ MongoDB Connected Successfully");
 
     // ==========================================
-    // GET ALL DESTINATIONS
+    // DATABASE
     // ==========================================
+    const db = client.db("wanderlust");
+
+    // ==========================================
+    // COLLECTIONS
+    // ==========================================
+    const destinationCollection =
+      db.collection("destinations");
+
+    const bookingsCollection =
+      db.collection("bookings");
+
+    // =====================================================
+    // GET ALL DESTINATIONS
+    // =====================================================
     app.get("/destination", async (req, res) => {
 
-      // Find all destinations
-      const result = await destinationCollection.find().toArray();
+      try {
 
-      // Send response
-      res.json(result);
+        const result =
+          await destinationCollection.find().toArray();
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch destinations",
+        });
+      }
     });
 
-    // ==========================================
+    // =====================================================
     // ADD NEW DESTINATION
-    // ==========================================
+    // =====================================================
     app.post("/destination", async (req, res) => {
 
-      // Get request body data
-      const destinationData = req.body;
+      try {
 
-      console.log(destinationData);
+        // Request Body Data
+        const destinationData = req.body;
 
-      // Insert into database
-      const result = await destinationCollection.insertOne(destinationData);
+        console.log(destinationData);
 
-      // Send response
-      res.json(result);
+        // Insert Data
+        const result =
+          await destinationCollection.insertOne(
+            destinationData
+          );
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to add destination",
+        });
+      }
     });
 
-    // ==========================================
-    // GET SINGLE DESTINATION BY ID
-    // ==========================================
+    // =====================================================
+    // GET SINGLE DESTINATION
+    // =====================================================
     app.get("/destination/:id", async (req, res) => {
 
-      // Get ID from params
-      const { id } = req.params;
+      try {
 
-      // Find single document
-      const result = await destinationCollection.findOne({
-        _id: new ObjectId(id),
-      });
+        // Get ID
+        const { id } = req.params;
 
-      // Send response
-      res.json(result);
+        // Find Destination
+        const result =
+          await destinationCollection.findOne({
+            _id: new ObjectId(id),
+          });
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch destination",
+        });
+      }
     });
 
-    // ==========================================
+    // =====================================================
     // UPDATE DESTINATION
-    // ==========================================
+    // =====================================================
     app.patch("/destination/:id", async (req, res) => {
 
-      // Get ID from params
-      const { id } = req.params;
+      try {
 
-      // Updated data from body
-      const updatedData = req.body;
+        // Get ID
+        const { id } = req.params;
 
-      console.log(updatedData);
+        // Updated Data
+        const updatedData = req.body;
 
-      // Update document
-      const result = await destinationCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updatedData }
-      );
+        console.log(updatedData);
 
-      // Send response
-      res.json(result);
+        // Update Query
+        const result =
+          await destinationCollection.updateOne(
+            { _id: new ObjectId(id) },
+            {
+              $set: updatedData,
+            }
+          );
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to update destination",
+        });
+      }
     });
 
-    // ==========================================
+    // =====================================================
     // DELETE DESTINATION
-    // ==========================================
+    // =====================================================
     app.delete("/destination/:id", async (req, res) => {
 
-      // Get ID from params
-      const { id } = req.params;
+      try {
 
-      // Delete document
-      const result = await destinationCollection.deleteOne({
+        // Get ID
+        const { id } = req.params;
+
+        // Delete Destination
+        const result =
+          await destinationCollection.deleteOne({
+            _id: new ObjectId(id),
+          });
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to delete destination",
+        });
+      }
+    });
+
+    // =====================================================
+    // CREATE BOOKING
+    // =====================================================
+    app.post("/bookings", async (req, res) => {
+
+      try {
+
+        // Booking Data
+        const bookingData = req.body;
+
+        console.log(bookingData);
+
+        // Insert Booking
+        const result =
+          await bookingsCollection.insertOne(
+            bookingData
+          );
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to create booking",
+        });
+      }
+    });
+
+    // =====================================================
+    // GET ALL BOOKINGS
+    // =====================================================
+    app.get("/bookings", async (req, res) => {
+
+      try {
+
+        // Find All Bookings
+        const result =
+          await bookingsCollection.find().toArray();
+
+        res.json(result);
+
+      } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch bookings",
+        });
+      }
+    });
+
+    app.delete("/bookings/:id", async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const result =
+      await bookingsCollection.deleteOne({
         _id: new ObjectId(id),
       });
 
-      // Send response
-      res.json(result);
+    res.send(result);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).send({
+      success: false,
+      message: "Failed to delete booking",
+    });
+  }
+});
+
+    // ==========================================
+    // MONGODB PING TEST
+    // ==========================================
+    await client.db("admin").command({
+      ping: 1,
     });
 
-    // MongoDB Ping Test
-    await client.db("admin").command({ ping: 1 });
-
     console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
+      "✅ Pinged your deployment successfully"
     );
+
+  } catch (error) {
+
+    console.log(error);
 
   } finally {
 
-    // Keep connection alive
+    // Keep MongoDB Connection Alive
     // await client.close();
   }
 }
 
-// Run server
+// ==========================================
+// RUN SERVER
+// ==========================================
 run().catch(console.dir);
 
-// Default Route
+// ==========================================
+// DEFAULT ROUTE
+// ==========================================
 app.get("/", (req, res) => {
-  res.send("Server is running fine!");
+
+  res.send("🚀 Wanderlust Server Running Successfully");
 });
 
-// Start Server
+// ==========================================
+// START SERVER
+// ==========================================
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+  console.log(`🚀 Server Running On Port ${PORT}`);
 });
